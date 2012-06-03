@@ -1,26 +1,32 @@
 
-#import "AppDelegate.h"
+#import "SimpleWebViewController.h"
+
+@interface AppDelegate : NSObject <UIApplicationDelegate> 
+
+@property (nonatomic, retain) UIWindow *window;
+
+@end
 
 @implementation AppDelegate
 
+@synthesize window;
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {    
 
-	NSURL* exampleURL = [NSURL URLWithString:@"http://www.twitter.com"];
-	simpleWebViewController = [[SimpleWebViewController alloc] initWithUrl:exampleURL];
-	rootViewController = [[UINavigationController alloc] initWithRootViewController:simpleWebViewController];
-	
-	window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-	[window addSubview:rootViewController.view];
-    [window makeKeyAndVisible];
-	
+    self.window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
+    [self.window makeKeyAndVisible];
+    self.window.rootViewController = [[UINavigationController alloc] initWithRootViewController:nil];
+    
+    NSURL* exampleURL = [NSURL URLWithString:@"http://www.twitter.com"];
+	[[[SimpleWebViewController alloc] initWithUrl:exampleURL] presentModal];
+
+    
     return YES;
 }
 
 -(void) dealloc
 {
-	[window release];
-	[rootViewController release];
-	[simpleWebViewController release];
+	self.window = nil;
 	[super dealloc];
 }
 

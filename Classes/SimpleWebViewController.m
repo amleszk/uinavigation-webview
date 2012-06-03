@@ -1,112 +1,97 @@
 
 #import "SimpleWebViewController.h"
 
-#define NAVIGATIONBAR_HEIGHT 44
-#define TOOLBAR_HEIGHT 44
-#define STATUSBAR_HEIGHT 20
-#define IPHONE_HEIGHT 480
-#define IPHONE_WIDTH 320
+@interface SimpleWebViewController ()
+@property (retain) UIWebView* webView;
+@property (retain) NSURL* url;
+@property (retain) SimpleWebViewToolBar* toolBar;
+@end
 
 @implementation SimpleWebViewController
+@synthesize webView,url,toolBar;
 
--(id) initWithUrl:(NSURL*)url_
+-(id) initWithUrl:(NSURL*)aURL
 {
 	self = [super initWithNibName:nil bundle:nil];
 	if (!self) {
 		return nil;
 	}
-	url = [url_ copy];
+	self.url = aURL;
 	return self;
 }
 
-- (void)viewDidLoad {
-    [super viewDidLoad];
+-(void) presentModal
+{
+    UINavigationController *navController = [[[UINavigationController alloc] initWithRootViewController:self] autorelease];
+    UIBarButtonItem *doneButton = [[[UIBarButtonItem alloc] 
+                                    initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+                                    target:self
+                                    action:@selector(done)] autorelease];
+    
+    [[self navigationItem] setRightBarButtonItem:doneButton];
+    navController.navigationBar.barStyle = UIBarStyleBlack;
+    [[UIApplication sharedApplication].keyWindow.rootViewController presentModalViewController:navController animated:TRUE];
+}
+
+-(void) done
+{
+    self.webView.delegate = nil;
+	[[UIApplication sharedApplication].keyWindow.rootViewController dismissModalViewControllerAnimated:YES];
+}
+
+- (void)viewDidLayoutSubviews
+{
+    if(self.view.superview)
+    {    
+        static CGFloat toolBarHeight = 44.;
+        CGRect frame = self.view.superview.frame;
+        frame.size.height += frame.origin.y;
+        frame.origin.y  = 0.;
+        frame.size.height -= toolBarHeight;
+        if([UIApplication sharedApplication].statusBarStyle != UIStatusBarStyleBlackTranslucent)
+            frame.size.height -= [UIApplication sharedApplication].statusBarFrame.size.height;
+        self.view.frame = frame;
+        self.webView.frame = CGRectMake(0,0.,frame.size.width,frame.size.height-toolBarHeight);
+        self.toolBar.frame = CGRectMake(0,frame.size.height-toolBarHeight,frame.size.width,toolBarHeight);
+    }
+}
+
+- (void)viewDidLoad
+{
+    self.webView = [[UIWebView alloc] initWithFrame:CGRectZero];
+	self.webView.delegate = self;
+	[self.webView loadRequest:[NSURLRequest requestWithURL:self.url]];
+	self.toolBar = [[SimpleWebViewToolBar alloc] initWithFrame:CGRectZero webView:self.webView];
 	
-	float webViewHeight = IPHONE_HEIGHT-STATUSBAR_HEIGHT-NAVIGATIONBAR_HEIGHT-TOOLBAR_HEIGHT;	
-	webView = [[UIWebView alloc] initWithFrame:CGRectMake(0,0,IPHONE_WIDTH,webViewHeight)];
-	webView.delegate = self;
-	[self.view addSubview:webView];
-	
-	toolBar = [[SimpleWebViewToolBar alloc] initWithFrame:CGRectMake(0,webViewHeight,IPHONE_WIDTH,TOOLBAR_HEIGHT) 
-												  webView:webView];
-	[self.view addSubview:toolBar];
+    [self.view addSubview:self.webView];
+    [self.view addSubview:self.toolBar];
 }
 
 - (void)viewDidUnload {
+    self.webView.delegate = nil;
+	self.webView = nil;
+    self.toolBar = nil;
+	self.url = nil;
     [super viewDidUnload];
-	[webView release];
-	[toolBar release];
-}
-
-- (void)viewDidAppear:(BOOL)animated
-{
-	NSURLRequest *requestObj = [NSURLRequest requestWithURL:url];
-	[webView loadRequest:requestObj];
-}
-
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-    return YES;
-}
-
-
-- (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
-{
-	if(toInterfaceOrientation == UIInterfaceOrientationLandscapeLeft || 
-	   toInterfaceOrientation == UIInterfaceOrientationLandscapeRight )
-	{	
-		float webViewHeight = IPHONE_WIDTH-STATUSBAR_HEIGHT-NAVIGATIONBAR_HEIGHT-TOOLBAR_HEIGHT;
-		
-		[UIView beginAnimations:nil context:nil];
-		[UIView setAnimationDuration:duration];
-		webView.frame = CGRectMake(0,0,IPHONE_HEIGHT,webViewHeight);
-		toolBar.frame = CGRectMake(0,webViewHeight,IPHONE_HEIGHT,TOOLBAR_HEIGHT);
-		[toolBar setLandscapeItems];
-		[UIView commitAnimations];
-	}
-	else if(toInterfaceOrientation == UIInterfaceOrientationPortrait || 
-			toInterfaceOrientation == UIDeviceOrientationPortraitUpsideDown)
-	{
-		float webViewHeight = IPHONE_HEIGHT-STATUSBAR_HEIGHT-NAVIGATIONBAR_HEIGHT-TOOLBAR_HEIGHT;
-		
-		[UIView beginAnimations:nil context:nil];
-		[UIView setAnimationDuration:duration];
-		webView.frame = CGRectMake(0,0,IPHONE_WIDTH,webViewHeight);
-		toolBar.frame = CGRectMake(0,webViewHeight,IPHONE_WIDTH,TOOLBAR_HEIGHT);
-		[toolBar setPortraitItems];
-		[UIView commitAnimations];
-	}
-}
-
-- (void)dealloc {
-    [super dealloc];
-	[url release];
 }
 
 
 #pragma mark Webview delegate
 
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request 
- navigationType:(UIWebViewNavigationType)navigationType
-{
-	return TRUE;
-}
-
-
 - (void)webViewDidStartLoad:(UIWebView *)webViewParam
 {
-	[toolBar setLoadingRequest];
+	[self.toolBar setLoadingRequest];
 }
 
 - (void)webViewDidFinishLoad:(UIWebView *)webViewParam
 {
-	self.title = [webView stringByEvaluatingJavaScriptFromString:@"document.title"];
-	[toolBar setIdle];
+	self.title = [self.webView stringByEvaluatingJavaScriptFromString:@"document.title"];
+	[self.toolBar setIdle];
 }
 
 - (void)webView:(UIWebView *)webViewParam didFailLoadWithError:(NSError *)error
 {
-	[toolBar setIdle];
+	[self.toolBar setIdle];
 }
 
 @end

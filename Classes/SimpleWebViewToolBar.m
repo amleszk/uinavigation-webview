@@ -2,20 +2,72 @@
 
 #import "SimpleWebViewToolBar.h"
 
+@interface SimpleWebViewToolBar () <UIActionSheetDelegate>
+@property (retain) UIBarButtonItem* itemRefesh;
+@property (retain) UIBarButtonItem* itemBack;
+@property (retain) UIBarButtonItem* itemForward;
+@property (retain) UIBarButtonItem* itemAction;
+@property (assign) UIWebView* webView;
+@property (retain) UIBarButtonItem* spacer1;
+@property (retain) UIBarButtonItem* spacer2;
+
+-(void) setLandscapeItems;
+-(void) setPortraitItems;
+-(void) refreshToolBarButtons;
+
+@end
+
 @implementation SimpleWebViewToolBar
+@synthesize itemAction,itemBack,itemRefesh,itemForward,spacer1,spacer2,webView;
+
+- (id)initWithFrame:(CGRect)frame webView:(UIWebView*)webViewParam
+{
+    self = [super initWithFrame:frame];
+    if (self) {		
+
+		self.itemBack = [[[UIBarButtonItem alloc] 
+					initWithImage:[UIImage imageNamed:@"back.png"]
+					style:UIBarButtonItemStylePlain
+					target:self 
+					action:@selector(back)] autorelease];
+
+		self.itemForward = [[[UIBarButtonItem alloc] 
+					   initWithImage:[UIImage imageNamed:@"forward.png"]
+					   style:UIBarButtonItemStylePlain
+					   target:self 
+					   action:@selector(forward)] autorelease];
+
+		self.itemAction = [[[UIBarButtonItem alloc] 
+									   initWithBarButtonSystemItem:UIBarButtonSystemItemAction 
+									   target:self 
+									   action:@selector(action)] autorelease];
+		
+		[self setPortraitItems];
+		self.barStyle = UIBarStyleBlack;
+		self.webView = webViewParam;
+    }
+    return self;
+}
+
+- (void)dealloc {
+    itemAction = nil,itemBack = nil,itemRefesh = nil,
+    itemForward = nil,spacer1 = nil,spacer2 = nil,webView = nil;
+    [super dealloc];
+}
 
 -(UIBarButtonItem*) spacerWithWidth:(CGFloat)w
 {
-	UIBarButtonItem* sp = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace 
-																		target:nil action:nil];
+	UIBarButtonItem* sp = [[[UIBarButtonItem alloc] 
+                           initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace 
+                           target:nil action:nil] autorelease];
 	sp.width = w;
 	return sp;
 }
 
 -(void) refreshToolBarButtons
 {
-	itemForward.enabled = webView.canGoForward;
-	itemBack.enabled = webView.canGoBack;
+	self.itemForward.enabled = webView.canGoForward;
+	self.itemBack.enabled = webView.canGoBack;
 }
 
 -(void) refreshToolBarItems
@@ -28,100 +80,58 @@
 
 -(void) setPortraitItems
 {
-	[spacer1 release];
-	[spacer2 release];
-	spacer1 = [self spacerWithWidth:10];
-	spacer2 = [self spacerWithWidth:52];
+	self.spacer1 = [self spacerWithWidth:10];
+	self.spacer2 = [self spacerWithWidth:52];
 	[self refreshToolBarItems];
 }
 
 -(void) setLandscapeItems
 {
-	[spacer1 release];
-	[spacer2 release];
-	spacer1 = [self spacerWithWidth:20];
-	spacer2 = [self spacerWithWidth:104];
+	self.spacer1 = [self spacerWithWidth:20];
+	self.spacer2 = [self spacerWithWidth:104];
 	[self refreshToolBarItems];
-}
-
-
-- (id)initWithFrame:(CGRect)frame webView:(UIWebView*)webViewParam
-{
-    
-    self = [super initWithFrame:frame];
-    if (self) {		
-
-		itemBack = [[UIBarButtonItem alloc] 
-					initWithImage:[UIImage imageNamed:@"back.png"]
-					style:UIBarButtonItemStylePlain
-					target:self 
-					action:@selector(back)];
-
-		itemForward = [[UIBarButtonItem alloc] 
-					   initWithImage:[UIImage imageNamed:@"forward.png"]
-					   style:UIBarButtonItemStylePlain
-					   target:self 
-					   action:@selector(forward)];
-
-		itemAction = [[UIBarButtonItem alloc] 
-									   initWithBarButtonSystemItem:UIBarButtonSystemItemAction 
-									   target:self 
-									   action:@selector(action)];
-		
-		[self setPortraitItems];
-		self.barStyle = UIBarStyleBlack;
-		webView = [webViewParam retain];
-		
-    }
-    return self;
 }
 
 -(void) setLoadingRequest
 {	
-	UIActivityIndicatorView* activityInd = [[[UIActivityIndicatorView alloc] initWithFrame:CGRectMake(0, 0, 18, 18)] autorelease];
+	UIActivityIndicatorView* activityInd = 
+    [[[UIActivityIndicatorView alloc] 
+      initWithFrame:CGRectMake(0, 0, 18, 18)] autorelease];
 	activityInd.activityIndicatorViewStyle = UIActivityIndicatorViewStyleWhite;
 	[activityInd startAnimating];
-	itemRefesh = [[UIBarButtonItem alloc] 
-				  initWithCustomView:activityInd];
+	self.itemRefesh = [[[UIBarButtonItem alloc] 
+                        initWithCustomView:activityInd] autorelease];
 	
 	[self refreshToolBarItems];
 }
 
 -(void) setIdle
 {
-	[itemRefesh release];
-	itemRefesh = [[UIBarButtonItem alloc] 
-				  initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh 
-				  target:self
-				  action:@selector(refresh)];
+	self.itemRefesh = [[[UIBarButtonItem alloc] 
+                       initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh 
+                       target:self
+                       action:@selector(refresh)] autorelease];
 	[self refreshToolBarItems];
-}
-
-- (void)dealloc {
-	[webView release];
-	[spacer1 release];
-	[spacer2 release];
-    [super dealloc];
 }
 
 -(void) forward
 {
-	[webView goForward];
+	[self.webView goForward];
 	[self refreshToolBarButtons];
 }
 
 -(void) back
 {
-	[webView goBack];
+	[self.webView goBack];
 	[self refreshToolBarButtons];
 }
 
 -(void) refresh {
-	[webView reload];
+	[self.webView reload];
 }
 
 -(void) action {
-	UIActionSheet* actionSheet = [[UIActionSheet alloc] initWithTitle:[[webView.request URL] absoluteString]
+	UIActionSheet* actionSheet = [[UIActionSheet alloc] initWithTitle:[[self.webView.request URL] absoluteString]
 															 delegate:self 
 													cancelButtonTitle:@"Cancel"
 											   destructiveButtonTitle:nil 
@@ -133,7 +143,7 @@
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
 	switch (buttonIndex) {
 		case 0:{
-			[[UIApplication sharedApplication] openURL:[webView.request URL]];
+			[[UIApplication sharedApplication] openURL:[self.webView.request URL]];
 			break;
 		}
 	}

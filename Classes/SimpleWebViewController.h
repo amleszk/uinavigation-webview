@@ -1,12 +1,9 @@
 
 #import "SimpleWebViewToolBar.h"
 
-@interface SimpleWebViewController : UIViewController<UIWebViewDelegate> {
-	UIWebView* webView;
-	NSURL* url;
-	SimpleWebViewToolBar* toolBar;
-}
+@interface SimpleWebViewController : UIViewController<UIWebViewDelegate> 
 
 -(id) initWithUrl:(NSURL*)url_;
+-(void) presentModal;
 
 @end
